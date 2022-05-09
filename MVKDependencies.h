@@ -2,6 +2,65 @@
 #import <Metal/Metal.h>
 #include <vulkan/vulkan.hpp>
 
+// MoltenVK/Common/MVKCommonEnvironment.h
+
+#include <TargetConditionals.h>
+
+/** Building for macOS. */
+#ifndef MVK_MACOS
+#   define MVK_MACOS                (TARGET_OS_OSX || TARGET_OS_MACCATALYST)
+#endif
+
+/** Building for iOS. */
+#ifndef MVK_IOS
+#   define MVK_IOS                  (TARGET_OS_IOS && !TARGET_OS_MACCATALYST)
+#endif
+
+/** Building for iOS on Mac Catalyst. */
+#ifndef MVK_MACCAT
+#   define MVK_MACCAT               TARGET_OS_MACCATALYST
+#endif
+
+/** Building for tvOS. */
+#ifndef MVK_TVOS
+#   define MVK_TVOS                 TARGET_OS_TV
+#endif
+
+/** Building for iOS or tvOS. */
+#ifndef MVK_IOS_OR_TVOS
+#   define MVK_IOS_OR_TVOS          (MVK_IOS || MVK_TVOS)
+#endif
+
+/** Building for macOS or iOS. */
+#ifndef MVK_MACOS_OR_IOS
+#   define MVK_MACOS_OR_IOS         (MVK_MACOS || MVK_IOS)
+#endif
+
+/** Building for a Simulator. */
+#ifndef MVK_OS_SIMULATOR
+#   define MVK_OS_SIMULATOR         TARGET_OS_SIMULATOR
+#endif
+
+/** Building for Apple Silicon on iOS, tvOS, or macOS platform. */
+#ifndef MVK_APPLE_SILICON
+#   define MVK_APPLE_SILICON        TARGET_CPU_ARM64
+#endif
+
+/** Building for macOS with support for Apple Silicon. */
+#ifndef MVK_MACOS_APPLE_SILICON
+#   define MVK_MACOS_APPLE_SILICON  (MVK_MACOS && MVK_APPLE_SILICON)
+#endif
+
+/** Building with Xcode versions. */
+#ifndef MVK_XCODE_13
+#   define MVK_XCODE_13             ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 120000) || \
+                                     (__IPHONE_OS_VERSION_MAX_ALLOWED >= 150000))   // Also covers tvOS
+#endif
+#ifndef MVK_XCODE_12
+#   define MVK_XCODE_12             ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 101600) || \
+                                     (__IPHONE_OS_VERSION_MAX_ALLOWED >= 140000))   // Also covers tvOS
+#endif
+
 // MoltenVK/include/MoltenVK/mvk_datatypes.h
 
 /** Enumerates the data type of a format. */
@@ -115,6 +174,26 @@ inline MVKOSVersion mvkOSVersion() {
 
 /** Returns whether the operating system version is at least minVer. */
 inline bool mvkOSVersionIsAtLeast(MVKOSVersion minVer) { return mvkOSVersion() >= minVer; }
+
+// MoltenVK/MoltenVK/GPUObjects/MVKDevice.mm
+
+// Since MacCatalyst does not support supportsBCTextureCompression, it is not possible
+// for Apple Silicon to indicate a lack of support for BCn when running MacCatalyst.
+// Therefore, assume for now that this means MacCatalyst does not actually support BCn.
+// Further evidence may change this approach.
+inline bool mvkSupportsBCTextureCompression(id<MTLDevice> mtlDevice) {
+#if MVK_IOS || MVK_TVOS || MVK_MACCAT
+    return false;
+#endif
+#if MVK_MACOS && !MVK_MACCAT
+#if MVK_XCODE_12
+    if ([mtlDevice respondsToSelector: @selector(supportsBCTextureCompression)]) {
+        return mtlDevice.supportsBCTextureCompression;
+    }
+#endif
+    return true;
+#endif
+}
 
 // Manual hacks
 

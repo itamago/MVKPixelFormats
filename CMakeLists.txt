@@ -13,5 +13,3 @@ target_link_libraries(MVKPixelFormats
     vulkan
     "-framework Metal"
 )
-
-target_compile_definitions(MVKPixelFormats PUBLIC MVK_MACOS)
