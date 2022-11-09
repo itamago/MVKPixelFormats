@@ -217,6 +217,7 @@ struct MVKPhysicalDeviceMetalFeatures
 
 class MVKVulkanAPIObject;
 
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class MVKBaseObject {
 public:
     virtual ~MVKBaseObject() = default;
@@ -241,6 +242,7 @@ public:
     virtual ~MVKVulkanAPIObject() = default;
 };
 
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class MVKPhysicalDevice : public MVKVulkanAPIObject {
 public:
     virtual ~MVKPhysicalDevice() = default;
